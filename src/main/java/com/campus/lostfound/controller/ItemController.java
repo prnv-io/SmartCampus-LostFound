@@ -28,5 +28,13 @@ public class ItemController {
     public List<Item> getAllItems() {
         return itemService.getAllItems();
     }
+    @PutMapping("/{id}/status")
+public Item updateItemStatus(
+        @PathVariable Long id,
+        @RequestParam String status
+) {
+    return itemService.updateItemStatus(id, status);
+}
+
 }
 
