@@ -1,5 +1,9 @@
 package com.campus.lostfound.service;
 
+import com.campus.lostfound.model.ItemMatch;
+import com.campus.lostfound.repository.ItemMatchRepository;
+
+
 import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 import java.util.HashMap;
@@ -14,13 +18,17 @@ import java.util.List;
 @Service
 public class ItemService {
 
-    private final ItemRepository itemRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
 
-    public ItemService(ItemRepository itemRepository) {
-        this.itemRepository = itemRepository;
+    private final ItemRepository itemRepository;
+    private final ItemMatchRepository itemMatchRepository;
+    private final RestTemplate restTemplate = new RestTemplate();
     
-    }
+    public ItemService(ItemRepository itemRepository,
+                   ItemMatchRepository itemMatchRepository) {
+    this.itemRepository = itemRepository;
+    this.itemMatchRepository = itemMatchRepository;
+}
+
 
     // Register a lost or found item
     public Item registerItem(Item item) {
@@ -83,11 +91,22 @@ if ("FOUND".equalsIgnoreCase(newItem.getItemType())) {
             double score = getSimilarityScore(lostItem, newItem);
 
             if (score >= 0.7) {
-                System.out.println("✅ MATCH FOUND");
-                System.out.println("Lost Item ID: " + lostItem.getItemId());
-                System.out.println("Found Item ID: " + newItem.getItemId());
-                System.out.println("Similarity Score: " + score);
-            }
+
+    ItemMatch match = new ItemMatch();
+    match.setLostItem(lostItem);
+    match.setFoundItem(newItem);
+    match.setSimilarityScore(score);
+    match.setStatus("PENDING");
+    match.setCreatedAt(LocalDateTime.now());
+
+    itemMatchRepository.save(match);
+
+    System.out.println("✅ MATCH STORED");
+    System.out.println("Lost Item ID: " + lostItem.getItemId());
+    System.out.println("Found Item ID: " + newItem.getItemId());
+    System.out.println("Similarity Score: " + score);
+}
+
         }
     }
 }
