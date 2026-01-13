@@ -1,5 +1,7 @@
 package com.campus.lostfound.service;
 
+import java.util.Comparator;
+
 import com.campus.lostfound.model.ItemMatch;
 import com.campus.lostfound.repository.ItemMatchRepository;
 
@@ -129,11 +131,32 @@ private double getSimilarityScore(Item lostItem, Item foundItem) {
     requestBody.put("lost_item", lost);
     requestBody.put("found_item", found);
 
-    Map response = restTemplate.postForObject(mlUrl, requestBody, Map.class);
+    Map<String, Object> response =
+            restTemplate.postForObject(mlUrl, requestBody, Map.class);
 
-    return (double) response.get("similarity_score");
+    return ((Number) response.get("similarity_score")).doubleValue();
 }
 
+private ItemMatch getBestMatch(List<ItemMatch> matches) {
+    return matches.stream()
+            .max(Comparator.comparingDouble(ItemMatch::getSimilarityScore))
+            .orElse(null);
+}
+
+public ItemMatch getBestMatchForLostItem(Long lostItemId) {
+
+    List<ItemMatch> pendingMatches =
+            itemMatchRepository.findByLostItem_ItemIdAndStatus(
+                    lostItemId, "PENDING");
+
+    return getBestMatch(pendingMatches);
+}
+
+   
+public List<ItemMatch> getPendingMatchesForLostItem(Long lostItemId) {
+    return itemMatchRepository
+            .findByLostItem_ItemIdAndStatus(lostItemId, "PENDING");
+}
 
 
 }
